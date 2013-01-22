@@ -39,7 +39,8 @@ UIImagePickerControllerDelegate
 - (IBAction)buttonRecordPressed:(id)sender;
 - (IBAction)buttonPlayPressed:(id)sender;
 - (IBAction)buttonGIFPressed:(id)sender;
-
+- (IBAction)buttonTorchPressed:(id)sender;
+- (IBAction)buttonCamFlipPressed:(id)sender;
 - (IBAction)buttonCancelVideoPressed:(id)sender;
 - (IBAction)buttonDoneVideoPressed:(id)sender;
 

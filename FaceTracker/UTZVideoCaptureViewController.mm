@@ -112,8 +112,8 @@ static inline CGRect GetLargestContour(vector< vector<cv::Point> > *contours)
 }
 
 @property (atomic, strong) NSMutableArray *recordedFrames;
-@property (atomic, retain) AVAssetReader *assetReader;
-@property (atomic, retain) AVAssetReaderTrackOutput * output;
+@property (atomic, strong) AVAssetReader *assetReader;
+@property (atomic, strong) AVAssetReaderTrackOutput * output;
 
 @end
 
@@ -125,15 +125,24 @@ static inline CGRect GetLargestContour(vector< vector<cv::Point> > *contours)
     if (self) {
         self.captureGrayscale = NO;// YES;
         self.qualityPreset = AVCaptureSessionPresetMedium;
-        self.camera = 1;
+        self.camera = 0;
         _showsThreshold = NO;
-//        _isRecording = NO;
         _isPlaying = NO;
+        
+        // This is calibrated for a Cheeto w/ out the torch
         _hMin = 0;
-        _hMax = 10;
-        _sMin = 232;
+        _hMax = 22;
+        _sMin = 184;
         _sMax = 255;
-        _vMin = 215;
+        _vMin = 163;
+        _vMax = 255;
+        
+        // This is calibrated for a Cheeto w/ the torch
+        _hMin = 0;
+        _hMax = 22;
+        _sMin = 194;
+        _sMax = 255;
+        _vMin = 118;
         _vMax = 255;
         
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -209,6 +218,11 @@ static inline CGRect GetLargestContour(vector< vector<cv::Point> > *contours)
 
 #pragma mark - IBAction
 
+- (IBAction)buttonTorchPressed:(id)sender
+{
+    self.torchOn = !self.torchOn;
+}
+
 - (IBAction)sliderMoved:(id)sender
 {
     _hMin = self.sliderHMin.value * 255;
@@ -257,79 +271,61 @@ static inline CGRect GetLargestContour(vector< vector<cv::Point> > *contours)
     _videoPicker.videoQuality = UIImagePickerControllerQualityTypeHigh;
     _videoPicker.showsCameraControls = NO;
     _videoPicker.cameraOverlayView = self.viewCameraOverlay;
-    //UIImagePickerControllerQualityTypeLow; // UIImagePickerControllerQualityType
     _videoPicker.view.frame = self.view.bounds;
-    //[self presentModalViewController:videoPicker animated:YES];
     [self presentViewController:_videoPicker animated:NO
                      completion:^{
                          //...
-                     }];
+                     }];    
     
-    /*
-    _isRecording = !_isRecording;
-    ((UIButton *)sender).titleLabel.textColor = _isRecording ? [UIColor redColor] : [UIColor blackColor];
-    
-    self.buttonPlay.enabled = !_isRecording;
-    
-    if(_isRecording){
-        self.recordedFrames = [NSMutableArray arrayWithCapacity:100];
-        [self pauseCapture];
-    }else{
-        [self resumeCapture];
-    }
-    */
     [self pauseCapture];
 }
 
 - (IBAction)buttonPlayPressed:(id)sender
 {
-    //NSLog(@"self.recordedFrames: %@", self.recordedFrames);
-    /*
-    for(UIImage *img in self.recordedFrames){
-        NSLog(@"img %@ size %@", img, NSStringFromCGSize(img.size));
-    }*/
-    
-    if(self.recordedFrames && self.recordedFrames.count > 0){
-        
-        //NSLog(@"TODO: Playback");
-        _isPlaying = !_isPlaying;
-        
-        self.buttonRecord.enabled = !_isPlaying;
-        
-        if(_isPlaying){
-            
-            // [self pauseCapture];
 
+    if(_isPlaying){
+        
+        // stop
+        
+        [_imgViewAnimation removeFromSuperview];
+        _imgViewAnimation = nil;
+        
+        [self resumeCapture];
+        
+        _isPlaying = NO;
+
+    }else{
+        
+       // Play
+        
+        if(self.recordedFrames && self.recordedFrames.count > 0){
+            
+            [self pauseCapture];
+            
             if(_imgViewAnimation){
                 [_imgViewAnimation removeFromSuperview];
                 _imgViewAnimation = nil;
             }
             
             _imgViewAnimation = [[WDLAnimatedGIFView alloc] initWithFrame:self.view.bounds];
-            //_imgViewAnimation.contentMode = UIViewContentModeScaleAspectFit;
             NSArray *imgs = [NSArray arrayWithArray:self.recordedFrames];
             _imgViewAnimation.animationImages = imgs;
             _imgViewAnimation.image = imgs[0];
             _imgViewAnimation.animationDuration = round(imgs.count / 30.0f);
             _imgViewAnimation.animationRepeatCount = 10e100;
-/*
-            [self.view insertSubview:_imgViewAnimation
-                        belowSubview:self.buttonPlay];
 
-            [_imgViewAnimation startAnimating];
-*/
             [self startImageViewPlayback];
-                        
+
         }else{
             
-            // TODO: Remove the animated gif
-            [_imgViewAnimation removeFromSuperview];
-            _imgViewAnimation = nil;
-            [self resumeCapture];
+            NSLog(@"ERROR: Couldn't find recorded frames");
             
         }
         
     }
+    
+    self.buttonRecord.enabled = !_isPlaying;
+
 }
 
 - (IBAction)buttonGIFPressed:(id)sender
@@ -343,7 +339,9 @@ static inline CGRect GetLargestContour(vector< vector<cv::Point> > *contours)
                                        delegate:nil
                               cancelButtonTitle:@"Dismiss"
                               otherButtonTitles:nil] show];
+            return;
         }
+        NSLog(@"Success");
     }else{
         NSLog(@"Loading gif...");
         _imgViewAnimation = [[WDLAnimatedGIFView alloc] initWithGIFPath:[self tmpGIFPath]];
@@ -360,16 +358,15 @@ static inline CGRect GetLargestContour(vector< vector<cv::Point> > *contours)
     }
 }
 
+- (IBAction)buttonCamFlipPressed:(id)sender
+{
+    self.camera = (self.camera == 1) ? 0 : 1;
+}
+
 #pragma mark - UIImagePicker
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
-    // Do something
-    // TODO:
-    // Show a spinner (in the cam overlay)
-    // Process the video
-    // Dismiss the controller
-    
     self.activityIndicator.hidden = NO;
     NSURL *videoURL = [info valueForKey:UIImagePickerControllerMediaURL];
 
@@ -380,7 +377,6 @@ static inline CGRect GetLargestContour(vector< vector<cv::Point> > *contours)
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         NSLog(@"Scanning video");
         [self scanVideoAtURL:videoURL];
-//        [self cancelVideoPicker];
     });
 
 }
@@ -400,6 +396,7 @@ static inline CGRect GetLargestContour(vector< vector<cv::Point> > *contours)
     [self.view insertSubview:_imgViewAnimation
                 belowSubview:self.buttonPlay];
     [_imgViewAnimation startAnimating];
+    _isPlaying = YES;
 }
 
 - (void)cancelVideoPicker
@@ -432,20 +429,6 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
              videoRect:rect
             completion:^(CGRect rectBlob, UIImage *imgBlob) {
         dispatch_sync(dispatch_get_main_queue(), ^{
-            
-            /*
-            if (videOrientation == AVCaptureVideoOrientationLandscapeRight)
-            {
-                // flip around y axis for back camera
-                cv::flip(mat, mat, 1);
-            }
-            else {
-                // Front camera output needs to be mirrored to match preview layer so no flip is required here
-            }
-            */
-            // videoOrientation = AVCaptureVideoOrientationPortrait;
-            
-            
             // This is a preview. Just show the blobs in a rect.
             [self displayBlob:rectBlob
                       inImage:imgBlob
@@ -465,23 +448,18 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
         blockComplete(CGRectZero, nil);
     }
     
-    // Shrink video frame to half size
-    /*
-     // TODO: Use a global / static var for this
-
-    cv::Mat matSmall;
-    cv::resize(mat, matSmall, cv::Size(), 0.5f, 0.5f, CV_INTER_LINEAR);
-    rect.size.width /= 2.0f;
-    rect.size.height /= 2.0f;
-    */
-    
     cv::Mat matSmall(mat);
+    
+    if (self.camera == 0){
+        // flip around y axis for back camera
+        cv::flip(matSmall, matSmall, 0); // -1 == both, 0 == x, 1 == y
+    }
 
     // Rotate video frame by 90deg to portrait by combining a transpose and a flip
     // Note that AVCaptureVideoDataOutput connection does NOT support hardware-accelerated
     // rotation and mirroring via videoOrientation and setVideoMirrored properties so we
     // need to do the rotation in software here.
-    
+
     cv::transpose(matSmall, matSmall);
     CGFloat temp = rect.size.width;
     rect.size.width = rect.size.height;
@@ -620,7 +598,7 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
         
         // Get information of the image
         uint8_t *baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
-        size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
+//        size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
         size_t vWidth = CVPixelBufferGetWidth(imageBuffer);
         size_t vHeight = CVPixelBufferGetHeight(imageBuffer);
         
@@ -669,7 +647,8 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
                             UIImage *videoImage = imageFromSampleBuffer(sampleBuffer);
                             
                             // This just translates it 90 down
-                            cropRect = CGRectMake(cropRect.origin.y, cropRect.origin.x, cropRect.size.height, cropRect.size.width);
+                            cropRect = CGRectMake(cropRect.origin.y, cropRect.origin.x,
+                                                  cropRect.size.height, cropRect.size.width);
                             
                             if(!CGRectEqualToRect(_cropFramePrev, CGRectZero)){
                                 static const int NumFrameAvgs = 2;
@@ -715,25 +694,9 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
     }else{
     
         NSLog(@"FINISHED reading");
-        /*
-        if(!_didFinishRendering){
-            
-            _didFinishRendering = YES;
-            
-        //    dispatch_async(dispatch_get_main_queue(), ^{
-            
-                self.activityIndicator.hidden = YES;
-                NSLog(@"Dismissing...");
-                [self dismissViewControllerAnimated:NO
-                                         completion:^{
-                                             _videoPicker = nil;
-                                             NSLog(@"_videoPicker is dismissed");
-                                             
-                                         }];
-                
-        //    });
-        }
-         */
+        
+        // NOTE: If we use multiple queues, add a BOOL flag here to avoid repeat cleanup
+        
     }
 }
          
@@ -771,10 +734,6 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
                                      [self readNextFrame];
                                  }];
 
-        //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-//            [self readNextFrame];
-        //});
-        
         /*
         int numQueues = 3;
         

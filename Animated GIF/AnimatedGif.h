@@ -43,8 +43,8 @@ static NSString *const AnimatedGifNotificationWasLoaded = @"AnimatedGifNotificat
     NSURL *url;
 }
 
-@property (nonatomic, retain) UIImageView *uiv;
-@property (nonatomic, retain) NSURL *url;
+@property (nonatomic, strong) UIImageView *uiv;
+@property (nonatomic, strong) NSURL *url;
 
 @end
 
@@ -74,7 +74,7 @@ static NSString *const AnimatedGifNotificationWasLoaded = @"AnimatedGifNotificat
     UIImageView *imageView;
 }
 
-@property (nonatomic, retain) UIImageView* imageView;
+@property (nonatomic, strong) UIImageView* imageView;
 @property bool busyDecoding;
 
 - (void) addToQueue: (AnimatedGifQueueObject *) agqo;

@@ -17,7 +17,7 @@
 @interface VideoCaptureViewController : UIViewController <AVCaptureVideoDataOutputSampleBufferDelegate>
 {
     AVCaptureSession *_captureSession;
-    AVCaptureDevice *_captureDevice;
+    AVCaptureDevice *__unsafe_unretained _captureDevice;
     AVCaptureVideoDataOutput *_videoOutput;
     AVCaptureVideoPreviewLayer *_videoPreviewLayer;
     
@@ -46,7 +46,7 @@
 
 // AVFoundation components
 @property (nonatomic, readonly) AVCaptureSession *captureSession;
-@property (nonatomic, readonly) AVCaptureDevice *captureDevice;
+@property (unsafe_unretained, nonatomic, readonly) AVCaptureDevice *captureDevice;
 @property (nonatomic, readonly) AVCaptureVideoDataOutput *videoOutput;
 @property (nonatomic, readonly) AVCaptureVideoPreviewLayer *videoPreviewLayer;
 

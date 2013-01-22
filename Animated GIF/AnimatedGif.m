@@ -60,10 +60,9 @@ static AnimatedGif * instance;
     
     AnimatedGifQueueObject *agqo = [[AnimatedGifQueueObject alloc] init];
     [agqo setUiv: [[UIImageView alloc] init]]; // 2x retain, alloc and the property.
-    [[agqo uiv] autorelease]; // We expect the user to retain the return object.
+    [agqo uiv]; // We expect the user to retain the return object.
     [agqo setUrl: animationUrl]; // this object is only retained by the queueobject, which will be released when loading finishes
     [[AnimatedGif sharedInstance] addToQueue: agqo];
-    [agqo release];
     
     if ([[AnimatedGif sharedInstance] busyDecoding] != YES)
     {
@@ -121,30 +120,10 @@ static AnimatedGif * instance;
 {
 	GIF_pointer = GIFData;
     
-    if (GIF_buffer != nil)
-    {
-        [GIF_buffer release];
-    }
     
-    if (GIF_global != nil)
-    {
-        [GIF_global release];
-    }
     
-    if (GIF_screen != nil)
-    {
-        [GIF_screen release];
-    }
         
-	if (GIF_delays != nil)
-    {
-        [GIF_delays release];
-    }
     
-    if (GIF_framesData != nil)
-    {
-        [GIF_framesData release];
-    }
         
     GIF_buffer = [[NSMutableData alloc] init];
 	GIF_global = [[NSMutableData alloc] init];
@@ -206,13 +185,10 @@ static AnimatedGif * instance;
 	}
 	
 	// clean up stuff
-	[GIF_buffer release];
     GIF_buffer = nil;
     
-	[GIF_screen release];
     GIF_screen = nil;
         
-	[GIF_global release];	
     GIF_global = nil;
 }
 
@@ -283,7 +259,6 @@ static AnimatedGif * instance;
 		}
 		
 		[imageView setAnimationImages:array];
-        [array release];
 		
 		// Count up the total delay, since Cocoa doesn't do per frame delays.
 		double total = 0;
@@ -300,7 +275,6 @@ static AnimatedGif * instance;
 		[imageView setAnimationRepeatCount:0];
 		
         [imageView startAnimating];
-        [imageView autorelease];
         
 		return imageView;
 	}
@@ -468,13 +442,13 @@ static AnimatedGif * instance;
 {
     if (GIF_buffer != nil)
     {
-        [GIF_buffer release]; // Release old buffer
+         // Release old buffer
         GIF_buffer = nil;
     }
     
 	if ([GIF_pointer length] >= dataPointer + length) // Don't read across the edge of the file..
     {
-		GIF_buffer = [[GIF_pointer subdataWithRange:NSMakeRange(dataPointer, length)] retain];
+		GIF_buffer = [GIF_pointer subdataWithRange:NSMakeRange(dataPointer, length)];
         dataPointer += length;
 		return YES;
 	}
@@ -499,33 +473,4 @@ static AnimatedGif * instance;
 
 }
 
-- (void) dealloc
-{
-    if (GIF_buffer != nil)
-    {
-	    [GIF_buffer release];
-    }
-    
-    if (GIF_screen != nil)
-    {
-		[GIF_screen release];
-    }
-        
-    if (GIF_global != nil)
-    {
-        [GIF_global release];
-    }
-    
-    if (GIF_delays != nil)
-    {
-		[GIF_delays release];
-    }
-    
-    if (GIF_framesData != nil)
-    {
-		[GIF_framesData release];
-    }
-
-	[super dealloc];
-}
 @end

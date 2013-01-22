@@ -38,6 +38,11 @@
 
 }
 
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 #pragma mark - Notifications
 
 - (void)imageViewWasLoaded:(NSNotification *)note
@@ -55,7 +60,7 @@
         
         // Remove the loaded view from the animated gif loader
         // This seems to cause issues. The memory management isn't working in the AnimatedGif class.
-        // [AnimatedGif sharedInstance].imageView = nil;
+        [AnimatedGif sharedInstance].imageView = nil;
         
     });
 
