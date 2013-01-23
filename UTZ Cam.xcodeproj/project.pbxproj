@@ -21,14 +21,20 @@
 		00DE37361430E806004993CC /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00DE37351430E806004993CC /* QuartzCore.framework */; };
 		00E53780142BE66400F30526 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 00E5377F142BE66300F30526 /* libz.dylib */; };
 		00E53783142BE6D600F30526 /* UIImage+OpenCV.mm in Sources */ = {isa = PBXBuildFile; fileRef = 00E53782142BE6D600F30526 /* UIImage+OpenCV.mm */; };
-		00E53787142BFEE600F30526 /* DemoVideoCaptureViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 00E53785142BFEE600F30526 /* DemoVideoCaptureViewController.mm */; };
-		00E53788142BFEE700F30526 /* DemoVideoCaptureViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 00E53786142BFEE600F30526 /* DemoVideoCaptureViewController.xib */; };
 		A9398D2F16AEEE50007CEA69 /* WDLAnimatedGIFView.m in Sources */ = {isa = PBXBuildFile; fileRef = A9398D2E16AEEE50007CEA69 /* WDLAnimatedGIFView.m */; };
 		A9398D3416AEF4C0007CEA69 /* AnimatedGif.m in Sources */ = {isa = PBXBuildFile; fileRef = A9398D3316AEF4C0007CEA69 /* AnimatedGif.m */; };
 		A9398D3616AEFB1D007CEA69 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9398D3516AEFB1C007CEA69 /* ImageIO.framework */; };
 		A9398D3E16AF0E75007CEA69 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A9398D3C16AF0E75007CEA69 /* Icon.png */; };
 		A9398D3F16AF0E75007CEA69 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A9398D3D16AF0E75007CEA69 /* Icon@2x.png */; };
 		A9398D4416AF36EA007CEA69 /* CGCVHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = A9398D4316AF36EA007CEA69 /* CGCVHelpers.mm */; };
+		A9398D4A16B05820007CEA69 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9398D4916B05820007CEA69 /* MessageUI.framework */; };
+		A9398D4D16B05E85007CEA69 /* email_export.html in Resources */ = {isa = PBXBuildFile; fileRef = A9398D4C16B05E85007CEA69 /* email_export.html */; };
+		A9398D4F16B060DB007CEA69 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9398D4E16B060DB007CEA69 /* AssetsLibrary.framework */; };
+		A9398D5216B068E3007CEA69 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = A9398D5016B068E3007CEA69 /* Default.png */; };
+		A9398D5316B068E3007CEA69 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A9398D5116B068E3007CEA69 /* Default@2x.png */; };
+		A9398D5716B07469007CEA69 /* WDLSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9398D5516B07468007CEA69 /* WDLSettingsViewController.m */; };
+		A9398D5816B07469007CEA69 /* WDLSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A9398D5616B07468007CEA69 /* WDLSettingsViewController.xib */; };
+		A9398D5B16B077A2007CEA69 /* WDLSettingsManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A9398D5A16B077A2007CEA69 /* WDLSettingsManager.m */; };
 		A96B01E116A9F7FE00DA73F4 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A96B01E016A9F7FE00DA73F4 /* Default-568h@2x.png */; };
 		A96B01F216A9FBC400DA73F4 /* UTZVideoCaptureViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = A96B01F016A9FBC400DA73F4 /* UTZVideoCaptureViewController.mm */; };
 		A96B01F316A9FBC400DA73F4 /* UTZVideoCaptureViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A96B01F116A9FBC400DA73F4 /* UTZVideoCaptureViewController.xib */; };
@@ -63,9 +69,6 @@
 		00E5377F142BE66300F30526 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		00E53781142BE6D600F30526 /* UIImage+OpenCV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+OpenCV.h"; sourceTree = "<group>"; };
 		00E53782142BE6D600F30526 /* UIImage+OpenCV.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UIImage+OpenCV.mm"; sourceTree = "<group>"; };
-		00E53784142BFEE600F30526 /* DemoVideoCaptureViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemoVideoCaptureViewController.h; sourceTree = "<group>"; };
-		00E53785142BFEE600F30526 /* DemoVideoCaptureViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DemoVideoCaptureViewController.mm; sourceTree = "<group>"; };
-		00E53786142BFEE600F30526 /* DemoVideoCaptureViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DemoVideoCaptureViewController.xib; sourceTree = "<group>"; };
 		A9398D2D16AEEE50007CEA69 /* WDLAnimatedGIFView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WDLAnimatedGIFView.h; path = ../WDLAnimatedGIFView.h; sourceTree = "<group>"; };
 		A9398D2E16AEEE50007CEA69 /* WDLAnimatedGIFView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = WDLAnimatedGIFView.m; path = ../WDLAnimatedGIFView.m; sourceTree = "<group>"; };
 		A9398D3216AEF4C0007CEA69 /* AnimatedGif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnimatedGif.h; sourceTree = "<group>"; };
@@ -75,6 +78,16 @@
 		A9398D3D16AF0E75007CEA69 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
 		A9398D4216AF36EA007CEA69 /* CGCVHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGCVHelpers.h; sourceTree = "<group>"; };
 		A9398D4316AF36EA007CEA69 /* CGCVHelpers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CGCVHelpers.mm; sourceTree = "<group>"; };
+		A9398D4916B05820007CEA69 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
+		A9398D4C16B05E85007CEA69 /* email_export.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = email_export.html; sourceTree = "<group>"; };
+		A9398D4E16B060DB007CEA69 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		A9398D5016B068E3007CEA69 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
+		A9398D5116B068E3007CEA69 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
+		A9398D5416B07467007CEA69 /* WDLSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WDLSettingsViewController.h; sourceTree = "<group>"; };
+		A9398D5516B07468007CEA69 /* WDLSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WDLSettingsViewController.m; sourceTree = "<group>"; };
+		A9398D5616B07468007CEA69 /* WDLSettingsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = WDLSettingsViewController.xib; sourceTree = "<group>"; };
+		A9398D5916B077A2007CEA69 /* WDLSettingsManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WDLSettingsManager.h; sourceTree = "<group>"; };
+		A9398D5A16B077A2007CEA69 /* WDLSettingsManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WDLSettingsManager.m; sourceTree = "<group>"; };
 		A96B01E016A9F7FE00DA73F4 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		A96B01EF16A9FBC400DA73F4 /* UTZVideoCaptureViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UTZVideoCaptureViewController.h; sourceTree = "<group>"; };
 		A96B01F016A9FBC400DA73F4 /* UTZVideoCaptureViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = UTZVideoCaptureViewController.mm; sourceTree = "<group>"; };
@@ -97,6 +110,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A9398D4F16B060DB007CEA69 /* AssetsLibrary.framework in Frameworks */,
+				A9398D4A16B05820007CEA69 /* MessageUI.framework in Frameworks */,
 				A9398D3616AEFB1D007CEA69 /* ImageIO.framework in Frameworks */,
 				A96B020016ADA9E500DA73F4 /* CoreImage.framework in Frameworks */,
 				A96B01FA16AD991900DA73F4 /* MobileCoreServices.framework in Frameworks */,
@@ -128,6 +143,8 @@
 		00427A34142B956500E5019E = {
 			isa = PBXGroup;
 			children = (
+				A9398D5C16B077A9007CEA69 /* Settings */,
+				A9398D4B16B05E7C007CEA69 /* HTML */,
 				A9398D3116AEF4C0007CEA69 /* Animated GIF */,
 				A9398D4116AF0E89007CEA69 /* Assets */,
 				00427A49142B956600E5019E /* FaceTracker */,
@@ -149,14 +166,16 @@
 		00427A42142B956600E5019E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				A9398D3516AEFB1C007CEA69 /* ImageIO.framework */,
-				A96B01FF16ADA9E400DA73F4 /* CoreImage.framework */,
+				A9398D4E16B060DB007CEA69 /* AssetsLibrary.framework */,
 				00427A61142B960D00E5019E /* AVFoundation.framework */,
 				00427A47142B956600E5019E /* CoreGraphics.framework */,
+				A96B01FF16ADA9E400DA73F4 /* CoreImage.framework */,
 				00427A63142B9A9700E5019E /* CoreMedia.framework */,
 				00427A65142B9AEC00E5019E /* CoreVideo.framework */,
 				00427A45142B956600E5019E /* Foundation.framework */,
+				A9398D3516AEFB1C007CEA69 /* ImageIO.framework */,
 				00E5377F142BE66300F30526 /* libz.dylib */,
+				A9398D4916B05820007CEA69 /* MessageUI.framework */,
 				A96B01F916AD991900DA73F4 /* MobileCoreServices.framework */,
 				000B5500142FEA870076F5A1 /* OpenCV.framework */,
 				00DE37351430E806004993CC /* QuartzCore.framework */,
@@ -170,14 +189,14 @@
 			children = (
 				00427A52142B956600E5019E /* AppDelegate.h */,
 				00427A53142B956600E5019E /* AppDelegate.mm */,
-				00E53784142BFEE600F30526 /* DemoVideoCaptureViewController.h */,
-				00E53785142BFEE600F30526 /* DemoVideoCaptureViewController.mm */,
-				00E53786142BFEE600F30526 /* DemoVideoCaptureViewController.xib */,
 				A96B01EF16A9FBC400DA73F4 /* UTZVideoCaptureViewController.h */,
 				A96B01F016A9FBC400DA73F4 /* UTZVideoCaptureViewController.mm */,
 				A96B01F116A9FBC400DA73F4 /* UTZVideoCaptureViewController.xib */,
 				00427A55142B956600E5019E /* VideoCaptureViewController.h */,
 				00427A56142B956600E5019E /* VideoCaptureViewController.mm */,
+				A9398D5416B07467007CEA69 /* WDLSettingsViewController.h */,
+				A9398D5516B07468007CEA69 /* WDLSettingsViewController.m */,
+				A9398D5616B07468007CEA69 /* WDLSettingsViewController.xib */,
 			);
 			path = FaceTracker;
 			sourceTree = "<group>";
@@ -227,12 +246,31 @@
 		A9398D4116AF0E89007CEA69 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
+				A9398D5016B068E3007CEA69 /* Default.png */,
+				A9398D5116B068E3007CEA69 /* Default@2x.png */,
 				A96B020A16ADCA4000DA73F4 /* test.png */,
 				A96B01E016A9F7FE00DA73F4 /* Default-568h@2x.png */,
 				A9398D3C16AF0E75007CEA69 /* Icon.png */,
 				A9398D3D16AF0E75007CEA69 /* Icon@2x.png */,
 			);
 			name = Assets;
+			sourceTree = "<group>";
+		};
+		A9398D4B16B05E7C007CEA69 /* HTML */ = {
+			isa = PBXGroup;
+			children = (
+				A9398D4C16B05E85007CEA69 /* email_export.html */,
+			);
+			name = HTML;
+			sourceTree = "<group>";
+		};
+		A9398D5C16B077A9007CEA69 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A9398D5916B077A2007CEA69 /* WDLSettingsManager.h */,
+				A9398D5A16B077A2007CEA69 /* WDLSettingsManager.m */,
+			);
+			name = Settings;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -286,12 +324,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				00427A4E142B956600E5019E /* InfoPlist.strings in Resources */,
-				00E53788142BFEE700F30526 /* DemoVideoCaptureViewController.xib in Resources */,
 				A96B01E116A9F7FE00DA73F4 /* Default-568h@2x.png in Resources */,
 				A96B01F316A9FBC400DA73F4 /* UTZVideoCaptureViewController.xib in Resources */,
 				A96B020B16ADCA4000DA73F4 /* test.png in Resources */,
 				A9398D3E16AF0E75007CEA69 /* Icon.png in Resources */,
 				A9398D3F16AF0E75007CEA69 /* Icon@2x.png in Resources */,
+				A9398D4D16B05E85007CEA69 /* email_export.html in Resources */,
+				A9398D5216B068E3007CEA69 /* Default.png in Resources */,
+				A9398D5316B068E3007CEA69 /* Default@2x.png in Resources */,
+				A9398D5816B07469007CEA69 /* WDLSettingsViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,7 +348,6 @@
 				00427A54142B956600E5019E /* AppDelegate.mm in Sources */,
 				00427A57142B956600E5019E /* VideoCaptureViewController.mm in Sources */,
 				00E53783142BE6D600F30526 /* UIImage+OpenCV.mm in Sources */,
-				00E53787142BFEE600F30526 /* DemoVideoCaptureViewController.mm in Sources */,
 				A96B01F216A9FBC400DA73F4 /* UTZVideoCaptureViewController.mm in Sources */,
 				A96B021816ADCCBD00DA73F4 /* CGGeometry.m in Sources */,
 				A96B021916ADCCBD00DA73F4 /* NSObject+MiscHelpers.m in Sources */,
@@ -315,6 +355,8 @@
 				A96B021B16ADCCBD00DA73F4 /* UIImage+MGTint.m in Sources */,
 				A9398D2F16AEEE50007CEA69 /* WDLAnimatedGIFView.m in Sources */,
 				A9398D3416AEF4C0007CEA69 /* AnimatedGif.m in Sources */,
+				A9398D5716B07469007CEA69 /* WDLSettingsViewController.m in Sources */,
+				A9398D5B16B077A2007CEA69 /* WDLSettingsManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,6 +425,7 @@
 					armv7,
 				);
 				CLANG_ENABLE_OBJC_ARC = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: william LINDMEIER (XMXN74B392)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -393,6 +436,7 @@
 				INFOPLIST_FILE = "FaceTracker/UTZ Cam-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
 				PRODUCT_NAME = "UTZ Cam";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "2F6EBBFC-B533-4D46-8F55-AFD8E5FEBDC5";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -405,6 +449,7 @@
 					armv7,
 				);
 				CLANG_ENABLE_OBJC_ARC = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: william LINDMEIER (XMXN74B392)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -415,6 +460,7 @@
 				INFOPLIST_FILE = "FaceTracker/UTZ Cam-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
 				PRODUCT_NAME = "UTZ Cam";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "2F6EBBFC-B533-4D46-8F55-AFD8E5FEBDC5";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

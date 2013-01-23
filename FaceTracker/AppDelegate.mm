@@ -14,20 +14,21 @@
 
 #import "AppDelegate.h"
 
-#import "DemoVideoCaptureViewController.h"
 #import "UTZVideoCaptureViewController.h"
+#import "WDLSettingsManager.h"
 
 @implementation AppDelegate
 
 @synthesize window = _window;
 @synthesize viewController = _viewController;
 
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    // Override point for customization after application launch.
-    //self.viewController = [[DemoVideoCaptureViewController alloc] initWithNibName:@"DemoVideoCaptureViewController" bundle:nil];
+    [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
+    
+    [WDLSettingsManager registerDefaults];
+    
     self.viewController = [[UTZVideoCaptureViewController alloc] initWithNibName:@"UTZVideoCaptureViewController" bundle:nil];
     self.window.rootViewController = self.viewController;
     [self.window makeKeyAndVisible];
@@ -71,6 +72,11 @@
      Save data if appropriate.
      See also applicationDidEnterBackground:.
      */
+}
+
+- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
+{
+    NSLog(@"MEMORY WARNING");
 }
 
 @end

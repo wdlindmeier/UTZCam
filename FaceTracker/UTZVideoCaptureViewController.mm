@@ -10,13 +10,28 @@
 #import "UIImage+OpenCV.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <CoreImage/CoreImage.h>
+#import <AssetsLibrary/AssetsLibrary.h>
 #import "UIImage+INResizeImageAllocator.h"
 #import "CGGeometry.h"
 #import "WDLAnimatedGIFView.h"
 #import "CGCVHelpers.h"
+#import "WDLSettingsViewController.h"
+#import "WDLSettingsManager.h"
+
+enum {
+    CamBack = 0,
+    CamFront = 1
+};
+
+typedef enum ViewStates {
+    ViewStatePreview,
+    ViewStateRecording,
+    ViewStatePlayback
+} ViewState;
 
 using namespace std;
 
+static const float MaxFrameToMarkerMargin = 5.0f;
 static const float MaxFrameDimension = 320.0f;
 
 @interface UTZVideoCaptureViewController ()
@@ -28,8 +43,14 @@ static const float MaxFrameDimension = 320.0f;
     WDLAnimatedGIFView *_imgViewAnimation;
     UIInterfaceOrientation _videoOrientation;
     CGRect _cropFramePrev;
-    BOOL _hasChangedColor;
+    BOOL _isColorPanelDisplayed;
     float _fpsCaptured;
+    float _markerMargin;
+    BOOL _startRecordingWhenMarkerAppears;
+    BOOL _shouldRecordingTriggerTorch;
+    BOOL _wasTorchOn;
+    ViewStates _currentViewState;
+    float _maxAnimationDuration;
 }
 
 @property (atomic, strong) NSMutableArray *recordedFrames;
@@ -48,14 +69,22 @@ static const float MaxFrameDimension = 320.0f;
     if (self) {
         self.captureGrayscale = NO;// YES;
         self.qualityPreset = AVCaptureSessionPresetMedium;
-        self.camera = 0;
+        self.camera = [[WDLSettingsManager valueForSetting:WDLSettingsKeySelectedCamera] intValue]; //CamBack;
         _showsThreshold = NO;
         _isPlaying = NO;
         self.isProcessing = NO;
         _isRecording = NO;
-        _hasChangedColor = NO;
+        _isColorPanelDisplayed = NO;
         self.torchOn = NO;
-
+        _wasTorchOn = NO;
+        _maxAnimationDuration = [[WDLSettingsManager valueForSetting:WDLSettingsKeyMaxAnimationSecs] floatValue];
+        _hMin = [[WDLSettingsManager valueForSetting:WDLSettingsKeyHueStart] floatValue];
+        _hMax = [[WDLSettingsManager valueForSetting:WDLSettingsKeyHueEnd] floatValue];
+        _sMin = [[WDLSettingsManager valueForSetting:WDLSettingsKeySaturationStart] floatValue];
+        _sMax = [[WDLSettingsManager valueForSetting:WDLSettingsKeySaturationEnd] floatValue];
+        _vMin = [[WDLSettingsManager valueForSetting:WDLSettingsKeyValueStart] floatValue];
+        _vMax = [[WDLSettingsManager valueForSetting:WDLSettingsKeyValueEnd] floatValue];
+        
     }
     return self;
 }
@@ -69,34 +98,10 @@ static const float MaxFrameDimension = 320.0f;
     return [documentsDirectory stringByAppendingPathComponent:@"tmp.gif"];
 }
 
-- (void)setTorchOn:(BOOL)isTorchOn
+- (void)setCamera:(int)camera
 {
-    [super setTorchOn:isTorchOn];
-    
-    if(!_hasChangedColor){
-        
-        if(!isTorchOn){
-            
-            // This is calibrated for a Cheeto w/ out the torch
-            _hMin = 0;
-            _hMax = 22;
-            _sMin = 184;
-            _sMax = 255;
-            _vMin = 163;
-            _vMax = 255;
-            
-        }else{
-            
-            // This is calibrated for a Cheeto w/ the torch
-            _hMin = 0;
-            _hMax = 22;
-            _sMin = 194;
-            _sMax = 255;
-            _vMin = 118;
-            _vMax = 255;
-            
-        }
-    }
+    [super setCamera:camera];
+    [WDLSettingsManager setValue:@(camera) forSetting:WDLSettingsKeySelectedCamera];
 }
 
 #pragma mark - View lifecycle
@@ -104,14 +109,22 @@ static const float MaxFrameDimension = 320.0f;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
     self.sliderHMin.value = _hMin / 255.0f;
     self.sliderHMax.value = _hMax / 255.0f;
     self.sliderSMin.value = _sMin / 255.0f;
     self.sliderSMax.value = _sMax / 255.0f;
     self.sliderVMin.value = _vMin / 255.0f;
     self.sliderVMax.value = _vMax / 255.0f;
+    
     // Update the labels
-    [self sliderMoved:nil];
+    [self sliderColorMoved:nil];
+    
+    // Update the margin
+    self.sliderFramePadding.value = [[WDLSettingsManager valueForSetting:WDLSettingsKeyMarkerMargin] floatValue];
+    [self sliderFramePaddingMoved:nil];
+    
+    [self setViewState:ViewStatePreview];
 
 }
 
@@ -126,6 +139,41 @@ static const float MaxFrameDimension = 320.0f;
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [self resumeCapture];
+    
+    // These values may have changed on the settings page
+    _startRecordingWhenMarkerAppears = [[WDLSettingsManager valueForSetting:WDLSettingsKeyColorTriggersRecording] boolValue];
+    _shouldRecordingTriggerTorch = [[WDLSettingsManager valueForSetting:WDLSettingsKeyRecordingTriggersTorch] boolValue];
+    _maxAnimationDuration = [[WDLSettingsManager valueForSetting:WDLSettingsKeyMaxAnimationSecs] floatValue];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [self pauseCapture];
+}
+
+#pragma mark - Settings
+
+- (void)savePadding
+{
+    float paddingVal = self.sliderFramePadding.value;
+    [WDLSettingsManager setValue:@(paddingVal) forSetting:WDLSettingsKeyMarkerMargin];
+}
+
+- (void)saveColors
+{
+    [WDLSettingsManager setValue:@(_hMin) forSetting:WDLSettingsKeyHueStart];
+    [WDLSettingsManager setValue:@(_hMax) forSetting:WDLSettingsKeyHueEnd];
+    [WDLSettingsManager setValue:@(_sMin) forSetting:WDLSettingsKeySaturationStart];
+    [WDLSettingsManager setValue:@(_sMax) forSetting:WDLSettingsKeySaturationEnd];
+    [WDLSettingsManager setValue:@(_vMin) forSetting:WDLSettingsKeyValueStart];
+    [WDLSettingsManager setValue:@(_vMax) forSetting:WDLSettingsKeyValueEnd];
+}
+
 #pragma mark - IBAction
 
 - (IBAction)buttonTorchPressed:(id)sender
@@ -133,9 +181,19 @@ static const float MaxFrameDimension = 320.0f;
     self.torchOn = !self.torchOn;
 }
 
-- (IBAction)sliderMoved:(id)sender
+- (IBAction)sliderFramePaddingMoved:(id)sender
 {
-    _hasChangedColor = YES;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(savePadding) object:nil];
+    
+    _markerMargin = self.sliderFramePadding.value * MaxFrameToMarkerMargin;
+    
+    [self performSelector:@selector(savePadding) withObject:nil afterDelay:0.5];
+    
+}
+
+- (IBAction)sliderColorMoved:(id)sender
+{
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(saveColors) object:nil];
     
     _hMin = self.sliderHMin.value * 255;
     _hMax = self.sliderHMax.value * 255;
@@ -143,18 +201,22 @@ static const float MaxFrameDimension = 320.0f;
     _sMax = self.sliderSMax.value * 255;
     _vMin = self.sliderVMin.value * 255;
     _vMax = self.sliderVMax.value * 255;
-    
+
     self.labelHMin.text = [NSString stringWithFormat:@"%i", _hMin];
     self.labelHMax.text = [NSString stringWithFormat:@"%i", _hMax];
     self.labelSMin.text = [NSString stringWithFormat:@"%i", _sMin];
     self.labelSMax.text = [NSString stringWithFormat:@"%i", _sMax];
     self.labelVMin.text = [NSString stringWithFormat:@"%i", _vMin];
     self.labelVMax.text = [NSString stringWithFormat:@"%i", _vMax];
+    
+    [self performSelector:@selector(saveColors) withObject:nil afterDelay:0.5];
+    
 }
 
 - (IBAction)buttonHUDPressed:(id)sender
 {
-    self.viewHUD.hidden = !self.viewHUD.hidden;
+    _isColorPanelDisplayed = self.viewHUD.hidden;
+    self.viewHUD.hidden = !_isColorPanelDisplayed;
 }
 
 - (IBAction)buttonRecordPressed:(id)sender
@@ -191,34 +253,23 @@ static const float MaxFrameDimension = 320.0f;
     
 }
 
-- (IBAction)buttonGIFPressed:(id)sender
+static NSString *ActionSheetButtonTitleEmail = NSLocalizedString(@"E-mail", @"Email export gif button");
+static NSString *ActionSheetButtonTitlePhotoLibrary = NSLocalizedString(@"Save to Library", @"Photo Roll export gif button");
+static NSString *ActionSheetButtonTitleSave = NSLocalizedString(@"Save", @"Save export gif button");
+
+- (IBAction)buttonSavePressed:(id)sender
 {
-    if(_imgViewAnimation){
-        NSLog(@"Exporting gif...");
-        BOOL didExport = [_imgViewAnimation exportToPath:[self tmpGIFPath]];
-        if(!didExport){
-            [[[UIAlertView alloc] initWithTitle:nil
-                                        message:@"Could not export GIF"
-                                       delegate:nil
-                              cancelButtonTitle:@"Dismiss"
-                              otherButtonTitles:nil] show];
-            return;
-        }
-        NSLog(@"Success");
-    }else{
-        NSLog(@"Loading gif...");
-        _imgViewAnimation = [[WDLAnimatedGIFView alloc] initWithGIFPath:[self tmpGIFPath]];
-        if(!_imgViewAnimation){
-            [[[UIAlertView alloc] initWithTitle:nil
-                                        message:@"Could not load GIF"
-                                       delegate:nil
-                              cancelButtonTitle:@"Dismiss"
-                              otherButtonTitles:nil] show];
-            return;
-        }
-        NSLog(@"_imgViewAnimation: %@ num frames %i", _imgViewAnimation, _imgViewAnimation.animationImages.count);
-        [self startImageViewPlayback];
-    }
+    UIActionSheet *as = [[UIActionSheet alloc] initWithTitle:NSLocalizedString(@"Export GIF", @"export action sheet title")
+                                delegate:self
+                       cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel save button")
+                  destructiveButtonTitle:nil
+                       otherButtonTitles:ActionSheetButtonTitleEmail,
+                                         ActionSheetButtonTitlePhotoLibrary,
+                                         //ActionSheetButtonTitleSave,
+                         nil];
+    
+    [as showInView:self.view];
+    
 }
 
 - (IBAction)buttonCamFlipPressed:(id)sender
@@ -226,7 +277,77 @@ static const float MaxFrameDimension = 320.0f;
     self.camera = (self.camera == 1) ? 0 : 1;
 }
 
+- (IBAction)buttonSettingsPressed:(id)sender
+{
+    WDLSettingsViewController *settingsVC = [[WDLSettingsViewController alloc] initWithNibName:@"WDLSettingsViewController"
+                                                                                        bundle:nil];
+    settingsVC.modalTransitionStyle = UIModalTransitionStyleFlipHorizontal;
+    [self presentViewController:settingsVC animated:YES completion:^{
+        //...
+    }];
+}
+
 #pragma mark - View States
+
+- (void)setViewState:(ViewState)state
+{
+    
+    for(CALayer *l in self.view.layer.sublayers){
+        if([l.name isEqualToString:@"BlobRect"] ||  [l.name isEqualToString:@"CaptureRect"]){
+            l.hidden = state != ViewStatePreview;
+        }else if([l.name isEqualToString:@"Threshold"]){
+            l.hidden = state != ViewStatePreview;
+        }
+    }
+    
+    [self.buttonRecord.layer removeAllAnimations];
+
+    switch (state) {
+        case ViewStateRecording:
+            self.buttonSettings.hidden = YES;
+            self.buttonPlay.hidden = YES;
+            self.buttonRecord.hidden = NO;
+            self.buttonSave.hidden = YES;
+            self.buttonTorch.hidden = YES;
+            self.buttonFlipCam.hidden = YES;
+            self.buttonColor.hidden = YES;
+            self.viewHUD.hidden = YES;
+        {
+            CABasicAnimation *animThrob = [CABasicAnimation animationWithKeyPath:@"opacity"];
+            animThrob.fromValue = [NSNumber numberWithFloat:1.0];
+            animThrob.toValue = [NSNumber numberWithFloat:0.25];
+            animThrob.repeatCount = 999;
+            animThrob.duration = 0.25;
+            animThrob.autoreverses = YES;
+            [self.buttonRecord.layer addAnimation:animThrob forKey:@"opacity"];
+        }
+            break;
+        case ViewStatePlayback:
+            self.buttonSettings.hidden = NO;
+            self.buttonPlay.hidden = NO;
+            self.buttonPlay.enabled = YES;
+            self.buttonRecord.hidden = YES;
+            self.buttonSave.hidden = NO;
+            self.buttonTorch.hidden = YES;
+            self.buttonFlipCam.hidden = YES;
+            self.buttonColor.hidden = YES;
+            self.viewHUD.hidden = YES;
+            break;
+        case ViewStatePreview:
+            self.buttonSettings.hidden = NO;
+            self.buttonPlay.hidden = NO;
+            self.buttonPlay.enabled = self.recordedFrames.count > 0;
+            self.buttonRecord.hidden = NO;
+            self.buttonSave.hidden = YES;
+            self.buttonTorch.hidden = NO;
+            self.buttonFlipCam.hidden = NO;
+            self.buttonColor.hidden = NO;
+            self.viewHUD.hidden = !_isColorPanelDisplayed;
+            break;
+    }
+    
+    _currentViewState = state;
+}
 
 - (void)startImageViewPlayback
 {
@@ -253,6 +374,13 @@ static const float MaxFrameDimension = 320.0f;
 {
     if(!_isRecording){
         
+        [self setViewState:ViewStateRecording];
+        
+        _wasTorchOn = self.torchOn;
+        if(_shouldRecordingTriggerTorch){
+            self.torchOn = YES;
+        }
+        
         _isRecording = YES;
         
         if(_isPlaying){
@@ -260,10 +388,11 @@ static const float MaxFrameDimension = 320.0f;
         }
         
         self.recordedFrames = nil;
-        self.capturedFrames = [NSMutableArray arrayWithCapacity:200];
+        int maxNumFrames = (int)(_maxAnimationDuration * 30);
+        self.capturedFrames = [NSMutableArray arrayWithCapacity:maxNumFrames];
         
-        // JIK
-        [self performSelector:@selector(stopRecording) withObject:nil afterDelay:3.0f];
+        // Max animation duration
+        [self performSelector:@selector(stopRecording) withObject:nil afterDelay:_maxAnimationDuration];
     }    
 }
 
@@ -271,8 +400,10 @@ static const float MaxFrameDimension = 320.0f;
 {
     if(_isRecording){
         
+        self.torchOn = _wasTorchOn;
         _fpsCaptured = _fps;
         _isRecording = NO;
+        [self.buttonRecord.layer removeAllAnimations];
         [self processCapturedFrames];
 
     }
@@ -283,6 +414,8 @@ static const float MaxFrameDimension = 320.0f;
     [_imgViewAnimation removeFromSuperview];
     _imgViewAnimation = nil;
     
+    [self setViewState:ViewStatePreview];
+    
     [self resumeCapture];
     
     _isPlaying = NO;
@@ -292,7 +425,7 @@ static const float MaxFrameDimension = 320.0f;
 {
      if(self.recordedFrames && self.recordedFrames.count > 0){
          
-        NSLog(@"Playback");
+         [self setViewState:ViewStatePlayback];
          
         [self pauseCapture];
         
@@ -307,7 +440,7 @@ static const float MaxFrameDimension = 320.0f;
         _imgViewAnimation.image = imgs[0];
          // Getting the fps from parent when the recording is complete
         _imgViewAnimation.animationDuration = round(imgs.count / _fpsCaptured);
-        _imgViewAnimation.animationRepeatCount = 10e100;
+        _imgViewAnimation.animationRepeatCount = 0; //endless
 
          // NOTE: This will set _isPlaying = YES
         [self startImageViewPlayback];
@@ -343,11 +476,24 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
                  videoRect:rect
                 completion:^(CGRect rectBlob, UIImage *imgBlob) {
             dispatch_sync(dispatch_get_main_queue(), ^{
-                // This is a preview. Just show the blobs in a rect.
-                [self displayBlob:rectBlob
-                          inImage:imgBlob
-                     forVideoRect:rect
-                 videoOrientation:AVCaptureVideoOrientationPortrait];
+                
+                // TODO: Should this be a setting?
+                // This is the threshold for color that is required to trigger
+                static const float MinMarkerTriggerSize = 1000.0f;
+                
+                float rectArea = rectBlob.size.width * rectBlob.size.height;
+                
+                if(_startRecordingWhenMarkerAppears && rectArea > MinMarkerTriggerSize){
+
+                    [self startRecording];
+                    
+                }else{
+                    // This is a preview. Just show the blobs in a rect.
+                    [self displayBlob:rectBlob
+                              inImage:imgBlob
+                         forVideoRect:rect
+                     videoOrientation:AVCaptureVideoOrientationPortrait];
+                }
                 
             });
         }];
@@ -448,29 +594,41 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
     // Account for the centering of the blob
     rectBlob.origin.x += sizeDelta.width * -0.5;
     rectBlob.origin.y += sizeDelta.height * -0.5;
+    
+    // w/ YES, x & y are transposed
+    CGRect cropRect = [self cropRectForBlobRect:rectBlob
+                                  inFrameOfSize:sizeFrame
+                                 adjustForVideo:NO];
 
     CALayer *camLayer = nil;
     CALayer *featureLayer = nil;
+    CALayer *captureLayer = nil;
     
     for(CALayer *l in self.view.layer.sublayers){
-        if([l.name isEqualToString:@"Blob"]){
+        if([l.name isEqualToString:@"BlobRect"]){
             if(featureLayer){
                 [l removeFromSuperlayer];
             }else{
                 featureLayer = l;
             }
-        }else if([l.name isEqualToString:@"Cam"]){
+        }else if([l.name isEqualToString:@"Threshold"]){
             if(camLayer){
                 [l removeFromSuperlayer];
             }else{
                 camLayer = l;
+            }
+        }else if([l.name isEqualToString:@"CaptureRect"]){
+            if(captureLayer){
+                [l removeFromSuperlayer];
+            }else{
+                captureLayer = l;
             }
         }
     }
 
     if(!camLayer){
         camLayer = [[CALayer alloc] init];
-        camLayer.name = @"Cam";
+        camLayer.name = @"Threshold";
         camLayer.frame = [UIScreen mainScreen].bounds;
         // TODO: Keep this in sync w/ the capture layer
         camLayer.contentsGravity = kCAGravityResizeAspectFill;
@@ -478,9 +636,18 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
         //[self.view.layer addSublayer:camLayer];
     }
     
+    if(!captureLayer){
+        captureLayer = [[CALayer alloc] init];
+        captureLayer.name = @"CaptureRect";
+        captureLayer.borderColor = [[UIColor greenColor] CGColor];
+        captureLayer.borderWidth = 1.0f;
+        [self.view.layer insertSublayer:captureLayer
+                                  above:camLayer];
+    }
+    
     if(!featureLayer){
         featureLayer = [[CALayer alloc] init];
-        featureLayer.name = @"Blob";
+        featureLayer.name = @"BlobRect";
         featureLayer.borderColor = [[UIColor redColor] CGColor];
         featureLayer.borderWidth = 1.0f;
         //        [self.view.layer addSublayer:featureLayer];
@@ -490,6 +657,7 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
 
     camLayer.contents = _showsThreshold ? (id)threshImage.CGImage : nil;
     featureLayer.frame = rectBlob;
+    captureLayer.frame = cropRect;
 
     [CATransaction commit];
 }
@@ -499,7 +667,7 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
     for(UITouch *t in touches){
-        if(t.tapCount > 0){
+        if(t.tapCount > 0 && _currentViewState == ViewStatePreview){
             _showsThreshold = !_showsThreshold;
         }
     }
@@ -511,25 +679,40 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
 {    
     self.isProcessing = YES;
     _cropFramePrev = CGRectZero;
- 
-    NSLog(@"Processing frames");
     
-    [self pauseCapture];
-     
-    // TODO: Show an activity indicator
+    self.labelLoading.text = NSLocalizedString(@"Processing Frames", @"Processing Frames label");
+    [self.view addSubview:self.viewProcessing];
+    
+    float delayInSeconds = 0.1;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
 
-    self.recordedFrames = [NSMutableArray arrayWithCapacity:self.capturedFrames.count];
-    for(UIImage *capImage in self.capturedFrames){
-        [self processRecordedFrame:capImage];
-    }
-    
-    self.capturedFrames = nil;
-    
-    self.isProcessing = NO;
-    
-    [self startPlaying];
-    
-//    [self resumeCapture];
+        [self pauseCapture];
+        
+        self.recordedFrames = [NSMutableArray arrayWithCapacity:self.capturedFrames.count];
+        for(UIImage *capImage in self.capturedFrames){
+            [self processRecordedFrame:capImage];
+        }
+        
+        self.capturedFrames = nil;
+        
+        self.isProcessing = NO;
+        
+        [self.viewProcessing removeFromSuperview];
+        
+        if(_startRecordingWhenMarkerAppears){
+            
+            // Just automatically start again
+            [self resumeCapture];
+            [self setViewState:ViewStatePreview];
+            
+        }else{
+        
+            [self startPlaying];
+            
+        }
+
+    });
 
 }
 
@@ -540,17 +723,8 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
     cv::Mat mat = [imgFrame CVMat];
     cv::Mat matMunge(mat);
     
-    // Flip, convert, transpose
-    // aye aye aye!
-    if (self.camera == 0){
-        cv::flip(mat, mat, 0); // -1 == both, 0 == x, 1 == y
-    }
-
     cv::cvtColor(mat, mat, CV_BGR2RGB);
     imgFrame = [UIImage imageWithCVMat:mat];
-    imgFrame = [UIImage imageWithCGImage:imgFrame.CGImage
-                                   scale:1.0
-                             orientation:UIImageOrientationLeftMirrored];
 
     [self processFrame:matMunge
              videoRect:CGRectMake(0, 0, sizeFrame.width, sizeFrame.height)
@@ -561,61 +735,22 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
                     // Skip the frame if there is no blob
                     
                 }else{
+                    
                     // Crop the image around the marker
-                    
-                    CGPoint rectCenter = CGPointMake(rectBlob.origin.x + (rectBlob.size.width * 0.5),
-                                                     rectBlob.origin.y + (rectBlob.size.height * 0.5));
-                    
-                    // TEST
-                    float tmp = rectCenter.y;
-                    rectCenter.x = sizeFrame.width - rectCenter.x - rectBlob.size.width;
-                    rectCenter.y = tmp;
-                    
-                    // TODO: Make this a settin
-                    static const float FrameToMarkerMulti = 1.5f; //5.0f;
-                    CGSize cropSize = CGSizeMake(rectBlob.size.width * FrameToMarkerMulti,
-                                                 rectBlob.size.height * FrameToMarkerMulti);
-                    
-                    float maxDimension = MAX(round(cropSize.width), round(cropSize.height));
-                    
-                    float x = rectCenter.x - (cropSize.width * 0.5);
-                    float y = rectCenter.y - (cropSize.height * 0.5);
-                    
-                    float maxWidth = floor(sizeFrame.width - x);
-                    float maxHeight = floor(sizeFrame.height - y);
-                    
-                    float maxMaxDimension = MAX(MIN(maxWidth, maxDimension), MIN(maxHeight, maxDimension));
-                    
-                    cropSize = CGSizeMake(maxMaxDimension, maxMaxDimension);
-                    
-                    x = rectCenter.x - (cropSize.width * 0.5);
-                    y = rectCenter.y - (cropSize.height * 0.5);
-                    
-                    CGRect cropRect = CGRectMake(MAX(0, round(x)),
-                                                 MAX(0, round(y)),
-                                                 cropSize.width,
-                                                 cropSize.height);
-                    
-                    // This just translates it 90 down
-                    cropRect = CGRectMake(cropRect.origin.y, cropRect.origin.x,
-                                          cropRect.size.height, cropRect.size.width);
-                    
-                    /* // Skip avging
-                    if(!CGRectEqualToRect(_cropFramePrev, CGRectZero)){
-                        static const int NumFrameAvgs = 2;
-                        // Average the frames
-                        cropRect = CGRectMake((_cropFramePrev.origin.x + (cropRect.origin.x * NumFrameAvgs)) / (NumFrameAvgs+1),
-                                              (_cropFramePrev.origin.y + (cropRect.origin.y * NumFrameAvgs)) / (NumFrameAvgs+1),
-                                              (_cropFramePrev.size.width + (cropRect.size.width * NumFrameAvgs)) / (NumFrameAvgs+1),
-                                              (_cropFramePrev.size.height + (cropRect.size.height * NumFrameAvgs)) / (NumFrameAvgs+1));
-                    }
-                    _cropFramePrev = cropRect;
-                    */
+
+                    CGRect cropRect = [self cropRectForBlobRect:rectBlob
+                                                  inFrameOfSize:sizeFrame
+                                                 adjustForVideo:YES];
                     
                     CGImageRef imageRef = CGImageCreateWithImageInRect(imgFrame.CGImage, cropRect);
+                    
+                    UIImageOrientation imgOrientation = UIImageOrientationRight;
+                    if(self.camera == CamFront){
+                        imgOrientation = UIImageOrientationLeftMirrored;
+                    }
                     UIImage *imgCrop = [UIImage imageWithCGImage:imageRef
                                                            scale:1.0
-                                                     orientation:UIImageOrientationLeftMirrored];
+                                                     orientation:imgOrientation];
                     
                     imgCrop = [UIImage imageWithImage:imgCrop scaledToSize:CGSizeMake(MaxFrameDimension, MaxFrameDimension)];
                     
@@ -626,6 +761,212 @@ typedef void (^image_proc_block_t)(CGRect rectBlob, UIImage *imgBlob);
                 }
                 
             }];
+}
+
+- (CGRect)cropRectForBlobRect:(CGRect)rectBlob
+                inFrameOfSize:(CGSize)sizeFrame
+               adjustForVideo:(BOOL)shouldAdjust
+{
+    
+    CGPoint rectCenter = CGPointMake(rectBlob.origin.x + (rectBlob.size.width * 0.5),
+                                     rectBlob.origin.y + (rectBlob.size.height * 0.5));
+    
+    if(!shouldAdjust){
+        // This is the preview
+        // Flip x & y
+        float tmp = rectCenter.x;
+        rectCenter.x = rectCenter.y;
+        rectCenter.y = tmp;
+    }
+    
+    CGSize cropSize = CGSizeMake(rectBlob.size.width * _markerMargin,
+                                 rectBlob.size.height * _markerMargin);
+    
+    float maxDimension = MAX(round(cropSize.width), round(cropSize.height));
+    
+    float x = rectCenter.x - (cropSize.width * 0.5);
+    float y = rectCenter.y - (cropSize.height * 0.5);
+    
+    float maxWidth = floor(sizeFrame.width - x);
+    float maxHeight = floor(sizeFrame.height - y);
+    
+    float maxMaxDimension = MAX(MIN(maxWidth, maxDimension), MIN(maxHeight, maxDimension));
+    
+    cropSize = CGSizeMake(maxMaxDimension, maxMaxDimension);
+    
+    x = rectCenter.x - (cropSize.width * 0.5);
+    y = rectCenter.y - (cropSize.height * 0.5);
+    
+    CGRect cropRect = CGRectMake(MAX(0, round(x)),
+                                 MAX(0, round(y)),
+                                 cropSize.width,
+                                 cropSize.height);
+    
+    // This just translates it 90 down
+    cropRect = CGRectMake(cropRect.origin.y, cropRect.origin.x,
+                          cropRect.size.height, cropRect.size.width);
+
+    if(shouldAdjust && self.camera == CamBack){
+        // This could probably be handled above
+        cropRect.origin.y = sizeFrame.height - (cropRect.origin.y + cropRect.size.height);
+    }
+    
+    return cropRect;
+    
+}
+
+#pragma mark - Action Sheet Delegate
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if(buttonIndex != actionSheet.cancelButtonIndex){
+        NSString *buttonTitle = [actionSheet buttonTitleAtIndex:buttonIndex];
+        if([buttonTitle isEqualToString:ActionSheetButtonTitleEmail]){
+            [self shareGIFViaEmail];
+        }else if([buttonTitle isEqualToString:ActionSheetButtonTitlePhotoLibrary]){
+            [self saveGIFToPhotoLibrary];
+        }else if([buttonTitle isEqualToString:ActionSheetButtonTitleSave]){
+            [self saveGIFWithCompletion:^(NSURL *gifURL) {
+                //...
+            }];
+        }
+    }
+}
+
+#pragma mark - Exporting GIFs
+
+- (void)saveGIFWithCompletion:(void (^)(NSURL *gifURL))completionBlock
+{
+    
+    BOOL canSave = !!_imgViewAnimation && _imgViewAnimation.animationImages.count > 0;
+    
+    if(!canSave){
+        
+        [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Export Error", @"export error alert title")
+                                    message:@"Could not export GIF"
+                                   delegate:nil
+                          cancelButtonTitle:@"Dismiss"
+                          otherButtonTitles:nil] show];
+        completionBlock(nil);
+    }
+     
+    self.labelLoading.text = NSLocalizedString(@"Generating Animation", @"Generating animation label");
+    
+    [self.view addSubview:self.viewProcessing];
+    float delayInSeconds = 0.1;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        
+        NSString *gifPath = [self tmpGIFPath];
+        BOOL didExport = [_imgViewAnimation exportToPath:gifPath];
+        
+        [self.viewProcessing removeFromSuperview];
+        
+        if(!didExport){
+            
+            [[[UIAlertView alloc] initWithTitle:nil
+                                        message:@"Could not export GIF"
+                                       delegate:nil
+                              cancelButtonTitle:@"Dismiss"
+                              otherButtonTitles:nil] show];
+            
+            completionBlock(nil);
+            
+        }else{
+            
+            completionBlock([NSURL fileURLWithPath:gifPath]);
+            
+        }
+        
+    });
+
+}
+
+- (void)saveGIFToPhotoLibrary
+{
+    [self saveGIFWithCompletion:^(NSURL *gifURL) {
+        if(gifURL){
+            
+            self.labelLoading.text = NSLocalizedString(@"Saving Animation", @"Saving animation label");
+            [self.view addSubview:self.viewProcessing];
+            
+            ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+            NSData *imageData = [NSData dataWithContentsOfURL:gifURL];
+            [library writeImageDataToSavedPhotosAlbum:imageData
+                                             metadata:0
+                                      completionBlock:^(NSURL *assetURL, NSError *error) {
+                                          
+                                          [self.viewProcessing removeFromSuperview];
+                                          
+                                          if(error){
+                                              [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Export Error", @"export error alert title")
+                                                                                              message:[error localizedDescription]
+                                                                                             delegate:nil
+                                                                                    cancelButtonTitle:NSLocalizedString(@"Dismiss", @"alert cancel button title")
+                                                                otherButtonTitles:nil] show];
+                                          }
+                                          
+                                      }];
+            
+        }
+    }];
+    
+}
+
+- (void)shareGIFViaEmail
+{
+    if([MFMailComposeViewController canSendMail]){
+        
+        [self saveGIFWithCompletion:^(NSURL *gifURL) {
+            if(gifURL){
+                
+                MFMailComposeViewController *mailer = [[MFMailComposeViewController alloc] init];
+                
+                mailer.mailComposeDelegate = self;
+                [mailer setSubject:@"UTZ Cam GIF"];
+                
+                NSData *imageData = [NSData dataWithContentsOfURL:gifURL];
+                [mailer addAttachmentData:imageData
+                                 mimeType:@"image/gif"
+                                 fileName:@"utzcam.gif"];
+                
+                NSString *emailBody = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"email_export" ofType:@"html"]
+                                                                encoding:NSUTF8StringEncoding
+                                                                   error:nil];
+                /*
+                NSString *dateString = [NSString stringWithFormat:@"%@", [NSDate date]];
+                emailBody = [emailBody stringByReplacingOccurrencesOfString:@"__DATETIME__"
+                                                                 withString:dateString];
+                */
+                [mailer setMessageBody:emailBody
+                                isHTML:YES];
+                
+                mailer.modalPresentationStyle = UIModalPresentationFormSheet;
+                
+                [self presentViewController:mailer
+                                   animated:YES
+                                 completion:nil];
+            }
+        }];
+        
+    }else{
+        
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Email Disabled", @"email disabled alert title")
+                                                        message:NSLocalizedString(@"You must have an e-mail account configured to send this GIF. Accounts can be configured in the Settings app.", @"email disabled alert message")
+                                                       delegate:nil
+                                              cancelButtonTitle:NSLocalizedString(@"Dismiss", @"alert cancel button title")
+                                              otherButtonTitles:nil];
+        [alert show];
+    }
+
+}
+
+#pragma mark - Message Delegate
+
+- (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
+{
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end

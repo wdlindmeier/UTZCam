@@ -47,7 +47,6 @@
 
 - (void)imageViewWasLoaded:(NSNotification *)note
 {
-    NSLog(@"Image view was loaded");
     UIImageView *loadedView = [note object];
     
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -76,7 +75,7 @@
     float duration = self.animationDuration;
     float frameDelay = duration / numFrames;
     int loopCount = self.animationRepeatCount;
-
+    
     CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)gifURL,
                                                                         kUTTypeGIF,
                                                                         numFrames,

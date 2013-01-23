@@ -80,7 +80,7 @@ const int kFrameTimeBufferSize = 5;
 {
     [super viewDidLoad];
     [self createCaptureSessionForCamera:_camera qualityPreset:_qualityPreset grayscale:_captureGrayscale];
-    [_captureSession startRunning];
+//    [_captureSession startRunning];
 }
 
 - (void)viewDidUnload
@@ -197,26 +197,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 
         CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
         OSType format = CVPixelBufferGetPixelFormatType(pixelBuffer);
-        /*
-        if (format == kCVPixelFormatType_32BGRA) {
-            
-            CGRect videoRect = CGRectMake(0.0f, 0.0f, CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
-            AVCaptureVideoOrientation videoOrientation = [[[_videoOutput connections] objectAtIndex:0] videoOrientation];
-            
-            UIImage *videoImage = UIImageFromImageBuffer(pixelBuffer);//sampleBuffer);
-            if(!CGSizeEqualToSize(videoImage.size, CGSizeZero)){
-                [self processFrame:videoImage videoRect:videoRect videoOrientation:videoOrientation];
-            }else{
-                NSLog(@"zero size image");
-            }
-            
-        }else{
-            
-            NSLog(@"Unsupported video format");
-            
-        }
-        */
-        
+
         CGRect videoRect = CGRectMake(0.0f, 0.0f, CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
         AVCaptureVideoOrientation videoOrientation = [[[_videoOutput connections] objectAtIndex:0] videoOrientation];
 
@@ -469,7 +450,6 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     // Create the preview layer
     _videoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:_captureSession];
     [_videoPreviewLayer setFrame:[UIScreen mainScreen].bounds];
-    NSLog(@"_videoPreviewLayer.frame: %@", NSStringFromCGRect(_videoPreviewLayer.frame));
     _videoPreviewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     [self.view.layer insertSublayer:_videoPreviewLayer atIndex:0];
     
