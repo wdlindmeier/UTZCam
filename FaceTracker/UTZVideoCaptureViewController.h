@@ -8,13 +8,12 @@
 
 #import "VideoCaptureViewController.h"
 
-@interface UTZVideoCaptureViewController : VideoCaptureViewController <
+@interface UTZVideoCaptureViewController : VideoCaptureViewController /*<
 UINavigationControllerDelegate,
 UIImagePickerControllerDelegate
->
+>*/
 
 @property (nonatomic, strong) IBOutlet UIView *viewHUD;
-@property (nonatomic, strong) IBOutlet UIView *viewCameraOverlay;
 
 @property (nonatomic, strong) IBOutlet UISlider *sliderHMin;
 @property (nonatomic, strong) IBOutlet UISlider *sliderHMax;
@@ -32,7 +31,6 @@ UIImagePickerControllerDelegate
 
 @property (nonatomic, strong) IBOutlet UIButton *buttonPlay;
 @property (nonatomic, strong) IBOutlet UIButton *buttonRecord;
-@property (nonatomic, strong) IBOutlet UIActivityIndicatorView *activityIndicator;
 
 - (IBAction)sliderMoved:(id)sender;
 - (IBAction)buttonHUDPressed:(id)sender;
@@ -41,7 +39,6 @@ UIImagePickerControllerDelegate
 - (IBAction)buttonGIFPressed:(id)sender;
 - (IBAction)buttonTorchPressed:(id)sender;
 - (IBAction)buttonCamFlipPressed:(id)sender;
-- (IBAction)buttonCancelVideoPressed:(id)sender;
-- (IBAction)buttonDoneVideoPressed:(id)sender;
+
 
 @end

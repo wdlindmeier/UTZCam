@@ -13,8 +13,8 @@
 //
 
 #import "UIImage+OpenCV.h"
-
 #import "VideoCaptureViewController.h"
+#import "CGCVHelpers.h"
 
 // Number of frames to average for FPS calculation
 const int kFrameTimeBufferSize = 5;
@@ -23,7 +23,8 @@ const int kFrameTimeBufferSize = 5;
 @interface VideoCaptureViewController ()
 - (BOOL)createCaptureSessionForCamera:(NSInteger)camera qualityPreset:(NSString *)qualityPreset grayscale:(BOOL)grayscale;
 - (void)destroyCaptureSession;
-- (void)processFrame:(cv::Mat&)mat videoRect:(CGRect)rect videoOrientation:(AVCaptureVideoOrientation)orientation;
+//- (void)processFrame:(cv::Mat&)mat videoRect:(CGRect)rect videoOrientation:(AVCaptureVideoOrientation)orientation;
+- (void)processFrame:(UIImage *)image videoRect:(CGRect)rect videoOrientation:(AVCaptureVideoOrientation)videoOrientation;
 - (void)updateDebugInfo;
 
 @property (nonatomic, assign) float fps;
@@ -193,33 +194,57 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
        fromConnection:(AVCaptureConnection *)connection
 {
     @autoreleasepool {
-    
+
         CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
         OSType format = CVPixelBufferGetPixelFormatType(pixelBuffer);
+        /*
+        if (format == kCVPixelFormatType_32BGRA) {
+            
+            CGRect videoRect = CGRectMake(0.0f, 0.0f, CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
+            AVCaptureVideoOrientation videoOrientation = [[[_videoOutput connections] objectAtIndex:0] videoOrientation];
+            
+            UIImage *videoImage = UIImageFromImageBuffer(pixelBuffer);//sampleBuffer);
+            if(!CGSizeEqualToSize(videoImage.size, CGSizeZero)){
+                [self processFrame:videoImage videoRect:videoRect videoOrientation:videoOrientation];
+            }else{
+                NSLog(@"zero size image");
+            }
+            
+        }else{
+            
+            NSLog(@"Unsupported video format");
+            
+        }
+        */
+        
         CGRect videoRect = CGRectMake(0.0f, 0.0f, CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
         AVCaptureVideoOrientation videoOrientation = [[[_videoOutput connections] objectAtIndex:0] videoOrientation];
-        
+
         if (format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+
             // For grayscale mode, the luminance channel of the YUV data is used
             CVPixelBufferLockBaseAddress(pixelBuffer, 0);
             void *baseaddress = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0);
             
             cv::Mat mat(videoRect.size.height, videoRect.size.width, CV_8UC1, baseaddress, 0);
             
-            [self processFrame:mat videoRect:videoRect videoOrientation:videoOrientation];
+            [self processCVFrame:mat videoRect:videoRect videoOrientation:videoOrientation];
             
             CVPixelBufferUnlockBaseAddress(pixelBuffer, 0); 
+         
         }
         else if (format == kCVPixelFormatType_32BGRA) {
+
             // For color mode a 4-channel cv::Mat is created from the BGRA data
             CVPixelBufferLockBaseAddress(pixelBuffer, 0);
             void *baseaddress = CVPixelBufferGetBaseAddress(pixelBuffer);
             
             cv::Mat mat(videoRect.size.height, videoRect.size.width, CV_8UC4, baseaddress, 0);
             
-            [self processFrame:mat videoRect:videoRect videoOrientation:videoOrientation];
+            [self processCVFrame:mat videoRect:videoRect videoOrientation:videoOrientation];
             
             CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);    
+         
         }
         else {
             NSLog(@"Unsupported video format");
@@ -280,9 +305,15 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 // orientation: Will generally by AVCaptureVideoOrientationLandscapeRight for the back camera and
 //              AVCaptureVideoOrientationLandscapeRight for the front camera
 //
-- (void)processFrame:(cv::Mat &)mat videoRect:(CGRect)rect videoOrientation:(AVCaptureVideoOrientation)orientation
-{
 
+- (void)processCVFrame:(cv::Mat &)mat videoRect:(CGRect)rect videoOrientation:(AVCaptureVideoOrientation)videoOrientation
+{
+    //...
+}
+
+- (void)processFrame:(UIImage *)image videoRect:(CGRect)rect videoOrientation:(AVCaptureVideoOrientation)videoOrientation
+{
+    //...
 }
 
 #pragma mark - Geometry methods

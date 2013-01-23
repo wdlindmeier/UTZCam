@@ -28,6 +28,7 @@
 		A9398D3616AEFB1D007CEA69 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9398D3516AEFB1C007CEA69 /* ImageIO.framework */; };
 		A9398D3E16AF0E75007CEA69 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A9398D3C16AF0E75007CEA69 /* Icon.png */; };
 		A9398D3F16AF0E75007CEA69 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A9398D3D16AF0E75007CEA69 /* Icon@2x.png */; };
+		A9398D4416AF36EA007CEA69 /* CGCVHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = A9398D4316AF36EA007CEA69 /* CGCVHelpers.mm */; };
 		A96B01E116A9F7FE00DA73F4 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A96B01E016A9F7FE00DA73F4 /* Default-568h@2x.png */; };
 		A96B01F216A9FBC400DA73F4 /* UTZVideoCaptureViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = A96B01F016A9FBC400DA73F4 /* UTZVideoCaptureViewController.mm */; };
 		A96B01F316A9FBC400DA73F4 /* UTZVideoCaptureViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A96B01F116A9FBC400DA73F4 /* UTZVideoCaptureViewController.xib */; };
@@ -72,6 +73,8 @@
 		A9398D3516AEFB1C007CEA69 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		A9398D3C16AF0E75007CEA69 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		A9398D3D16AF0E75007CEA69 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
+		A9398D4216AF36EA007CEA69 /* CGCVHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGCVHelpers.h; sourceTree = "<group>"; };
+		A9398D4316AF36EA007CEA69 /* CGCVHelpers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CGCVHelpers.mm; sourceTree = "<group>"; };
 		A96B01E016A9F7FE00DA73F4 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		A96B01EF16A9FBC400DA73F4 /* UTZVideoCaptureViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UTZVideoCaptureViewController.h; sourceTree = "<group>"; };
 		A96B01F016A9FBC400DA73F4 /* UTZVideoCaptureViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = UTZVideoCaptureViewController.mm; sourceTree = "<group>"; };
@@ -215,6 +218,8 @@
 				A96B021316ADCCBD00DA73F4 /* NSObject+MiscHelpers.m */,
 				A96B021016ADCCBD00DA73F4 /* CGGeometry.h */,
 				A96B021116ADCCBD00DA73F4 /* CGGeometry.m */,
+				A9398D4216AF36EA007CEA69 /* CGCVHelpers.h */,
+				A9398D4316AF36EA007CEA69 /* CGCVHelpers.mm */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -298,6 +303,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				00427A50142B956600E5019E /* main.m in Sources */,
+				A9398D4416AF36EA007CEA69 /* CGCVHelpers.mm in Sources */,
 				00427A54142B956600E5019E /* AppDelegate.mm in Sources */,
 				00427A57142B956600E5019E /* VideoCaptureViewController.mm in Sources */,
 				00E53783142BE6D600F30526 /* UIImage+OpenCV.mm in Sources */,
